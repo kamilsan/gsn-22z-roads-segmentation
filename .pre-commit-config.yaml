@@ -1,0 +1,9 @@
+repos:
+-   repo: local
+    hooks:
+    -   id: check-format
+        name: Check Python code format
+        entry: autopep8 --diff --exit-code
+        language: python
+        pass_filenames: true
+        types: [python]

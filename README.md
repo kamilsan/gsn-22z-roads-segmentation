@@ -17,6 +17,19 @@ Install required packages:
 (venv) $ pip install -r requirements.txt
 ```
 
+To register pre-commit hooks:
+
+```console
+(venv) $ pre-commit install
+```
+
+Run code formatter and/or linter:
+
+```console
+(venv) $ ./scripts/format_code.sh
+(venv) $ ./scripts/run_linter.sh
+```
+
 ## Usage
 
 ```console
