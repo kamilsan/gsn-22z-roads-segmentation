@@ -5,48 +5,27 @@ from torch.utils.data import DataLoader
 import torchvision
 import torchvision.transforms
 
+from lightning_data_modules.city_scapes import CityScapesDataModule
 from models.unet import UNet
+from lightning_modules.segmentation_module import SegmentationModule
+
+import pytorch_lightning as pl
 
 
 def main():
+    DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    print("Running on: " + str(DEVICE))
 
-    transforms_input = torchvision.transforms.Compose([
-        torchvision.transforms.Resize((572, 572)),
-        torchvision.transforms.ToTensor()
-    ])
+    model = SegmentationModule(UNet(3, 30))
 
-    transforms_target = torchvision.transforms.Compose([
-        torchvision.transforms.Resize((388, 388)),
-        torchvision.transforms.PILToTensor()
-    ])
+    data_module = CityScapesDataModule()
+    data_module.setup()
+    # trainer = pl.Trainer(max_epochs=50, accelerator='gpu', devices=1, logger=wandb_logger,
+    #                      callbacks=[checkpoint_callback, early_stop_callback, ImagePredictionLogger(val_samples)])
 
-    dataset = torchvision.datasets.Cityscapes('./dataset', split='train', mode='fine',
-                                              target_type='semantic', transform=transforms_input, target_transform=transforms_target)
-    loader = DataLoader(dataset, batch_size=1, shuffle=False)
+    trainer = pl.Trainer(max_epochs=50, accelerator=str(DEVICE), devices=1)
 
-    model = UNet(3, 30)
-    loss_function = nn.CrossEntropyLoss()
-
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
-
-    first_batch = [next(iter(loader))]
-
-    epochs = 1000
-
-    model.train()
-    for epoch in range(epochs):
-        print(f'Epoch {epoch+1} out of {epochs}')
-
-        for x, target in first_batch:
-            y = model(x)
-
-            # unsqueeze needed to make a batch, because squeeze removed it
-            loss = loss_function(y, target.long().squeeze().unsqueeze(dim=0))
-            print(f'Loss: {loss}')
-
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+    trainer.fit(model, data_module)
 
 
 if __name__ == '__main__':
