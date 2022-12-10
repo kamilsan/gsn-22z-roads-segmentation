@@ -12,4 +12,4 @@ if [ "$( dirname "$0" )" != "./scripts" ]; then
     exit
 fi
 
-pylint *.py
+pylint *.py models/*.py

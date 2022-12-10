@@ -12,4 +12,4 @@ if [ "$( dirname "$0" )" != "./scripts" ]; then
     exit
 fi
 
-autopep8 --diff --exit-code *.py
+autopep8 --diff --exit-code *.py models/*.py
