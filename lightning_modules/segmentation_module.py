@@ -2,7 +2,7 @@ import torch
 import pytorch_lightning as pl
 
 import torch.nn.functional as F
-import torchmetrics.functional
+import torchmetrics.functional as MF
 
 
 class SegmentationModule(pl.LightningModule):
@@ -10,7 +10,7 @@ class SegmentationModule(pl.LightningModule):
         super().__init__()
         self.model = model
         self.lr = 0.02
-        self.num_classes = 33
+        self.num_classes = 34
         self.current_epoch_training_loss = torch.tensor(0.0)
 
     def forward(self, x: torch.Tensor):
@@ -28,7 +28,7 @@ class SegmentationModule(pl.LightningModule):
     def common_test_valid_step(self, batch, batch_idx):
         loss, outputs, y = self.common_step(batch, batch_idx)
         preds = torch.argmax(outputs, dim=1)
-        IoU = torchmetrics.functional.jaccard_index(preds.unsqueeze(dim=1), y, task="multiclass", num_classes=self.num_classes)
+        IoU = MF.jaccard_index(preds.unsqueeze(dim=1), y, task="multiclass", num_classes=self.num_classes)
         return loss, IoU
 
     def training_step(self, batch, batch_idx):
@@ -42,14 +42,12 @@ class SegmentationModule(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         loss, IoU = self.common_test_valid_step(batch, batch_idx)
         self.log('val_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
-        self.log('val_acc', IoU, on_step=True, on_epoch=True, prog_bar=True, logger=True)
-        return {'val_loss': loss, 'val_acc': IoU}
+        self.log('val_IoU', IoU, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        return {'val_loss': loss, 'val_IoU': IoU}
 
     def validation_epoch_end(self, outs):
         avg_loss = torch.stack([o["val_loss"] for o in outs]).mean()
-        self.logger.experiment.add_scalars('train and val losses',
-                                           {'train': self.current_epoch_training_loss.item(), 'val': avg_loss.item()},
-                                           self.current_epoch)
+        self.log('train and val losses', {'train': self.current_epoch_training_loss.item(), 'val': avg_loss.item()})
 
     def test_step(self, batch, batch_idx):
         loss, IoU = self.common_test_valid_step(batch, batch_idx)

@@ -6,7 +6,7 @@ from torchvision.transforms import Resize, Compose, ToTensor, Normalize, PILToTe
 
 
 class CityScapesDataModule(pl.LightningDataModule):
-    def __init__(self, batch_size: int = 10, data_directory: str = './dataset', *kwargs):
+    def __init__(self, batch_size: int = 5, data_directory: str = './dataset', num_workers=4, *kwargs):
         super().__init__()
         self.data_directory = data_directory
         self.test_dataset = None
@@ -26,6 +26,8 @@ class CityScapesDataModule(pl.LightningDataModule):
             PILToTensor()
         ])
 
+        self.num_workers = num_workers
+
     def prepare_data(self):
         pass
 
@@ -40,10 +42,10 @@ class CityScapesDataModule(pl.LightningDataModule):
                                            transform=self.imagenet_transform, target_transform=self.target_transform)
 
     def train_dataloader(self):
-        return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True)
+        return DataLoader(self.train_dataset, batch_size=self.batch_size, num_workers=self.num_workers, shuffle=True)
 
     def val_dataloader(self):
-        return DataLoader(self.val_dataset, batch_size=self.batch_size)
+        return DataLoader(self.val_dataset, batch_size=self.batch_size, num_workers=self.num_workers)
 
     def test_dataloader(self):
-        return DataLoader(self.test_dataset, batch_size=self.batch_size)
+        return DataLoader(self.test_dataset, batch_size=self.batch_size, num_workers=self.num_workers)
