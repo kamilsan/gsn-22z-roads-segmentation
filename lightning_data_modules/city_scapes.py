@@ -2,11 +2,11 @@ import torch
 from torch.utils.data import DataLoader
 import pytorch_lightning as pl
 from torchvision.datasets import Cityscapes
-from torchvision.transforms import Resize, Compose, ToTensor, Normalize, PILToTensor
+from torchvision.transforms import Resize, Compose, ToTensor, Normalize, PILToTensor, InterpolationMode
 
 
 class CityScapesDataModule(pl.LightningDataModule):
-    def __init__(self, batch_size: int = 5, data_directory: str = './dataset', num_workers=4, *kwargs):
+    def __init__(self, batch_size: int = 4, data_directory: str = './dataset', num_workers=4, *kwargs):
         super().__init__()
         self.data_directory = data_directory
         self.test_dataset = None
@@ -22,7 +22,7 @@ class CityScapesDataModule(pl.LightningDataModule):
             Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
         self.target_transform = Compose([
-            Resize((388, 388)),
+            Resize(self.image_size, interpolation=InterpolationMode.NEAREST),
             PILToTensor()
         ])
 

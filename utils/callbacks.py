@@ -21,14 +21,18 @@ class ImageSegmentationLogger(Callback):
         logits = pl_module(val_imgs)
         preds = torch.argmax(logits, 1)
 
+        class_labels = dict.fromkeys(range(1, 34), range(1, 34))
+
         # Log the images as wandb Image
         trainer.logger.experiment.log({
             "examples": [wandb.Image(np.moveaxis(x.to(device='cpu').numpy(), 0, 2), masks={
                 "predictions": {
-                    "mask_data": pred.to(device='cpu').numpy()
+                    "mask_data": pred.to(device='cpu').numpy(),
+                    "class_labels": class_labels
                 },
                 "ground_truth": {
-                    "mask_data": y.to(device='cpu').squeeze().numpy()
+                    "mask_data": y.to(device='cpu').squeeze().numpy(),
+                    "class_labels": class_labels
                 }
             })
                          for x, pred, y in zip(val_imgs[:self.num_samples],
