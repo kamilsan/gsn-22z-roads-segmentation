@@ -23,22 +23,25 @@ class ImageSegmentationLogger(Callback):
 
         class_labels = dict(zip(range(1, 34), [str(x) for x in range(1, 34)]))
 
-        # Log the images as wandb Image
-        trainer.logger.experiment.log({
-            "examples": [wandb.Image(np.moveaxis(x.to(device='cpu').numpy(), 0, 2), masks={
-                "predictions": {
-                    "mask_data": pred.to(device='cpu').numpy(),
-                    "class_labels": class_labels
-                },
-                "ground_truth": {
-                    "mask_data": y.to(device='cpu').squeeze().numpy(),
-                    "class_labels": class_labels
-                }
+        for x, pred, y in zip(val_imgs[:self.num_samples],
+                              preds[:self.num_samples],
+                              val_labels[:self.num_samples]):
+
+            pred = pred.to(device='cpu').numpy()
+            y = y.to(device='cpu').squeeze().numpy()
+
+            trainer.logger.experiment.log({
+                "examples": wandb.Image(np.moveaxis(x.to(device='cpu').numpy(), 0, 2), masks={
+                    "predictions": {
+                        "mask_data": pred,
+                        "class_labels": class_labels
+                    },
+                    "ground_truth": {
+                        "mask_data": y,
+                        "class_labels": class_labels
+                    }
+                })
             })
-                         for x, pred, y in zip(val_imgs[:self.num_samples],
-                                               preds[:self.num_samples],
-                                               val_labels[:self.num_samples])]
-        })
 
 
 early_stop_callback = EarlyStopping(
