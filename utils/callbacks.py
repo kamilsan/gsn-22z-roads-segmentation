@@ -5,7 +5,10 @@ from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
 import wandb
+from torchvision.transforms import Resize, InterpolationMode
 
+def resize(input: torch.Tensor, target: torch.Tensor):
+    return Resize(target.size()[-2:-1], interpolation=InterpolationMode.NEAREST).forward(input)
 
 class ImageSegmentationLogger(Callback):
     def __init__(self, val_samples, num_samples=32):
@@ -16,27 +19,30 @@ class ImageSegmentationLogger(Callback):
     def on_validation_epoch_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule):
         # Bring the tensors to CPU
         val_imgs = self.val_imgs.to(device=pl_module.device)
-        val_labels = self.val_labels.to(device=pl_module.device)
+        val_ground_truth = self.val_labels.to(device=pl_module.device)
+        val_ground_truth = resize(val_ground_truth, val_imgs)
         # Get model prediction
-        logits = pl_module(val_imgs)
-        preds = torch.argmax(logits, 1)
+        outputs = pl_module(val_imgs)
+        outputs = resize(outputs, val_imgs)
+        preds = torch.argmax(outputs, 1)
 
         class_labels = dict(zip(range(1, 34), [str(x) for x in range(1, 34)]))
 
         for x, pred, y in zip(val_imgs[:self.num_samples],
                               preds[:self.num_samples],
-                              val_labels[:self.num_samples]):
+                              val_ground_truth[:self.num_samples]):
 
+            x = np.moveaxis(x.to(device='cpu').numpy(), 0, 2)
             pred = pred.to(device='cpu').numpy()
             y = y.to(device='cpu').squeeze().numpy()
 
             trainer.logger.experiment.log({
-                "examples": wandb.Image(np.moveaxis(x.to(device='cpu').numpy(), 0, 2), masks={
-                    "predictions": {
+                "examples": wandb.Image(x, masks={
+                    "prediction": {
                         "mask_data": pred,
                         "class_labels": class_labels
                     },
-                    "ground_truth": {
+                    "ground truth": {
                         "mask_data": y,
                         "class_labels": class_labels
                     }

@@ -4,13 +4,10 @@ import pytorch_lightning as pl
 import torch.nn.functional as F
 import torchmetrics.functional as MF
 
-from torchvision.transforms import Resize, InterpolationMode
-
 
 class SegmentationModule(pl.LightningModule):
     def __init__(self, model):
         super().__init__()
-        self.model_output_mask_size = None
         self.model = model
         self.lr = 0.02
         self.num_classes = 34
@@ -25,8 +22,6 @@ class SegmentationModule(pl.LightningModule):
     def common_step(self, batch: torch.Tensor, batch_idx) -> (torch.Tensor, torch.Tensor, torch.Tensor):
         x, y = batch
         outputs = self(x)
-        self.model_output_mask_size = outputs.size()[-2:-1]
-        outputs = Resize(x.size()[-2:-1], interpolation=InterpolationMode.NEAREST).forward(outputs)
         loss = self.compute_loss(outputs, y.long().squeeze())
         return loss, outputs, y
 

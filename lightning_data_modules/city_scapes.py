@@ -15,6 +15,7 @@ class CityScapesDataModule(pl.LightningDataModule):
         print('batch_size:', batch_size)
         self.batch_size = batch_size
         self.image_size = (572, 572)
+        self.target_size = (388, 388)
 
         self.imagenet_transform = Compose([
             Resize(self.image_size),
@@ -22,7 +23,7 @@ class CityScapesDataModule(pl.LightningDataModule):
             Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
         self.target_transform = Compose([
-            Resize(self.image_size, interpolation=InterpolationMode.NEAREST),
+            Resize(self.target_size, interpolation=InterpolationMode.NEAREST),
             PILToTensor()
         ])
 
