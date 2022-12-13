@@ -5,21 +5,20 @@ from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
 import wandb
-from torchvision.transforms import Resize, InterpolationMode
 
-def resize(input: torch.Tensor, target: torch.Tensor):
-    return Resize(target.size()[-2:-1], interpolation=InterpolationMode.NEAREST).forward(input)
+from utils.utils import resize
+
 
 class ImageSegmentationLogger(Callback):
-    def __init__(self, val_samples, num_samples=32):
+    def __init__(self, val_samples: torch.Tensor, num_samples: int = 32) -> None:
         super().__init__()
         self.num_samples = num_samples
-        self.val_imgs, self.val_labels = val_samples
+        self.val_imgs, self.val_ground_truth = val_samples
 
-    def on_validation_epoch_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule):
+    def on_validation_epoch_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule) -> None:
         # Bring the tensors to CPU
         val_imgs = self.val_imgs.to(device=pl_module.device)
-        val_ground_truth = self.val_labels.to(device=pl_module.device)
+        val_ground_truth = self.val_ground_truth.to(device=pl_module.device)
         val_ground_truth = resize(val_ground_truth, val_imgs)
         # Get model prediction
         outputs = pl_module(val_imgs)
@@ -31,7 +30,6 @@ class ImageSegmentationLogger(Callback):
         for x, pred, y in zip(val_imgs[:self.num_samples],
                               preds[:self.num_samples],
                               val_ground_truth[:self.num_samples]):
-
             x = np.moveaxis(x.to(device='cpu').numpy(), 0, 2)
             pred = pred.to(device='cpu').numpy()
             y = y.to(device='cpu').squeeze().numpy()
