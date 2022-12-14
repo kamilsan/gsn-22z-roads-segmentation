@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Dict, Tuple
 
 import torch
 import torch.nn.functional as F
@@ -35,7 +35,7 @@ class SegmentationModule(pl.LightningModule):
             dim=1), y, task="multiclass", num_classes=self.num_classes)
         return loss, iou
 
-    def training_step(self, batch: torch.Tensor, batch_idx: int) -> dict[str, torch.Tensor]:
+    def training_step(self, batch: torch.Tensor, batch_idx: int) -> Dict[str, torch.Tensor]:
         loss, _, _ = self.common_step(batch)
         self.log('train_loss', loss, on_step=True,
                  on_epoch=True, prog_bar=True, logger=True)
@@ -45,7 +45,7 @@ class SegmentationModule(pl.LightningModule):
         self.current_epoch_training_loss = torch.stack(
             [o["loss"] for o in outs]).mean()
 
-    def validation_step(self, batch: torch.Tensor, batch_idx: int) -> dict[str, torch.Tensor]:
+    def validation_step(self, batch: torch.Tensor, batch_idx: int) -> Dict[str, torch.Tensor]:
         loss, iou = self.common_test_valid_step(batch)
         self.log('val_loss', loss, on_step=True,
                  on_epoch=True, prog_bar=True, logger=True)
@@ -58,7 +58,7 @@ class SegmentationModule(pl.LightningModule):
         self.log('train and val losses', {
                  'train': self.current_epoch_training_loss.item(), 'val': avg_loss.item()})
 
-    def test_step(self, batch: torch.Tensor) -> dict[str, torch.Tensor]:
+    def test_step(self, batch: torch.Tensor) -> Dict[str, torch.Tensor]:
         loss, iou = self.common_test_valid_step(batch)
         self.log('test_loss', loss, on_step=True,
                  on_epoch=True, prog_bar=True, logger=True)
