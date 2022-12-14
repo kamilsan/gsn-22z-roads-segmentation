@@ -9,7 +9,7 @@ from project.utils.remap_labels import RemapCityscapesLabels
 
 
 class CityScapesDataModule(pl.LightningDataModule):
-    def __init__(self, batch_size: int = 4, data_directory: str = './dataset', num_workers: int = 4) -> None:
+    def __init__(self, batch_size: int = 4, data_directory: str = '~/dataset', num_workers: int = 4, **kwargs) -> None:
         super().__init__()
         self.data_directory = data_directory
         self.test_dataset = None

@@ -27,7 +27,7 @@ class UNetConvBlock(nn.Module):
 
 class UNet(nn.Module):
 
-    def __init__(self, in_channels: int, out_channels: int, channels: List[int] = [64, 128, 256, 512, 1024]) -> None:
+    def __init__(self, in_channels: int, out_channels: int, channels: List[int] = [64, 128, 256, 512, 1024], **kwargs) -> None:
         super().__init__()
 
         self.num_classes = out_channels

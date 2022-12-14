@@ -1,19 +1,20 @@
 hydra:
   run:
-    # Configure output dir of each experiment programmatically from the arguments
-    # Example "outputs/mnist/classifier/baseline/2021-03-10-141516"
     dir: outputs/${data.name}/${model.name}/${experiment}/${now:%Y-%m-%d_%H%M%S}
 
 # Global configurations shared between different modules
 experiment: baseline
+seed: 42
 
-# Composing nested config with default
+
 defaults:
-  - data: mnist  # Path to sub-config, can also omit the .yaml extension
-  - model: classifier.yaml  # I add full path for easy navigation in vim (cursor in path, press gf)
-
-  - override hydra/job_logging: colorlog
-  - override hydra/hydra_logging: colorlog
+  - data: city_scapes
+  - lightning_module: segmentation_module
+  - model: unet
+  - logger: wandb
+#
+#  - override hydra/job_logging: colorlog
+#  - override hydra/hydra_logging: colorlog
 
 # Pytorch lightning trainer's argument
 # default flags are commented to avoid clustering the hyperparameters
@@ -25,11 +26,12 @@ trainer:
   # auto_lr_find: False
   # auto_scale_batch_size: False
   # auto_select_gpus: False
-  benchmark: True
+  # benchmark: True
   # check_val_every_n_epoch: 1
   # checkpoint_callback: True
   # default_root_dir:
   # deterministic: False
+  devices: 1
   # fast_dev_run: False
   # flush_logs_every_n_steps: 100
   # gpus:
@@ -41,7 +43,7 @@ trainer:
   # log_every_n_steps: 50
   # log_gpu_memory: False
   # logger: True
-  # max_epochs: None
+  max_epochs: 2
   # max_steps: None
   # min_epochs: None
   # min_steps: None
@@ -62,7 +64,6 @@ trainer:
   # resume_from_checkpoint: None
   # stochastic_weight_avg: False
   # sync_batchnorm: False
-  terminate_on_nan: True
   # track_grad_norm: -1
   # truncated_bptt_steps: None
   # val_check_interval: 1.0

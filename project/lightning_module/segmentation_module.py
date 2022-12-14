@@ -10,12 +10,12 @@ import pytorch_lightning as pl
 
 
 class SegmentationModule(pl.LightningModule):
-    def __init__(self, model, optimizer) -> None:
+    def __init__(self, model, optim, **kwargs) -> None:
         super().__init__()
         self.save_hyperparameters()
 
         self.model = model
-        self.optimizer = optimizer
+        self.optimizer = optim
         self.lr = 1e-4
         self.num_classes = model.num_classes
         self.current_epoch_training_loss = torch.tensor(0.0)
