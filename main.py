@@ -1,5 +1,4 @@
 import hydra
-import numpy as np
 import pytorch_lightning as pl
 import torch
 from omegaconf import DictConfig, OmegaConf
@@ -11,8 +10,6 @@ from project.utils.callbacks import ImageSegmentationLogger, checkpoint_callback
 def main(cfg: DictConfig) -> None:
 
     pl.seed_everything(cfg.seed)
-    torch.manual_seed(cfg.seed)
-    np.random.seed(cfg.seed)
 
     device = torch.device(
         'cuda') if torch.cuda.is_available() else torch.device('cpu')

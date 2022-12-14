@@ -9,25 +9,25 @@ from project.utils.remap_labels import RemapCityscapesLabels
 
 
 class CityScapesDataModule(pl.LightningDataModule):
-    def __init__(self, batch_size: int = 4, data_directory: str = '~/dataset', num_workers: int = 4, **kwargs) -> None:
+    def __init__(self, image_size, norm_mean, norm_std, batch_size: int = 4, data_directory: str = '~/dataset',
+                 num_workers: int = 4, **kwargs) -> None:
         super().__init__()
         self.data_directory = data_directory
         self.test_dataset = None
         self.val_dataset = None
         self.train_dataset = None
         self.batch_size = batch_size
-        self.image_size = (576, 576)
-        self.target_size = (576, 576)
+        self.image_size = tuple(image_size)
 
         self.imagenet_transform = Compose([
             Resize(self.image_size),
             ToTensor(),
-            Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+            Normalize(mean=norm_mean, std=norm_std)
         ])
 
         self.target_transform = Compose([
             RemapCityscapesLabels(id2label),
-            Resize(self.target_size, interpolation=InterpolationMode.NEAREST),
+            Resize(self.image_size, interpolation=InterpolationMode.NEAREST),
             PILToTensor()
         ])
 
