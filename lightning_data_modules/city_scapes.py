@@ -1,20 +1,23 @@
-import pytorch_lightning as pl
 from torch.utils.data import DataLoader
 from torchvision.datasets import Cityscapes
 from torchvision.transforms import Resize, Compose, ToTensor, Normalize, PILToTensor, InterpolationMode
 
+import pytorch_lightning as pl
+
+from utils.labels import id2label
+from utils.remap_labels import RemapCityscapesLabels
+
 
 class CityScapesDataModule(pl.LightningDataModule):
-    def __init__(self, batch_size: int = 4, data_directory: str = './dataset', num_workers=4, *kwargs):
+    def __init__(self, batch_size: int = 4, data_directory: str = './dataset', num_workers: int = 4) -> None:
         super().__init__()
         self.data_directory = data_directory
         self.test_dataset = None
         self.val_dataset = None
         self.train_dataset = None
-        print('batch_size:', batch_size)
         self.batch_size = batch_size
-        self.image_size = (572, 572)
-        self.target_size = (388, 388)
+        self.image_size = (576, 576)
+        self.target_size = (576, 576)
 
         self.imagenet_transform = Compose([
             Resize(self.image_size),
@@ -23,14 +26,12 @@ class CityScapesDataModule(pl.LightningDataModule):
         ])
 
         self.target_transform = Compose([
+            RemapCityscapesLabels(id2label),
             Resize(self.target_size, interpolation=InterpolationMode.NEAREST),
             PILToTensor()
         ])
 
         self.num_workers = num_workers
-
-    def prepare_data(self):
-        pass
 
     def setup(self, stage: str = None) -> None:
         if stage == 'fit' or stage is None:

@@ -45,10 +45,9 @@ termcolor==2.1.1
 toml==0.10.2
 tomli==2.0.1
 tomlkit==0.11.6
-torch~=1.13.0+cu116
-torchaudio==0.13.0+cpu
+torch~=1.13.0
 torchmetrics==0.11.0
-torchvision~=0.14.0+cu116
+torchvision~=0.14.0
 tqdm==4.64.1
 typing_extensions==4.4.0
 urllib3==1.26.12

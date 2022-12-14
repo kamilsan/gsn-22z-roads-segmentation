@@ -1,6 +1,7 @@
 import torch
-from torchvision.transforms import Resize, InterpolationMode
+import torchvision.transforms.functional as TF
+from torchvision.transforms import InterpolationMode
 
 
-def resize(input_tensor: torch.Tensor, target: torch.Tensor):
-    return Resize(target.size()[-2:-1], interpolation=InterpolationMode.NEAREST).forward(input_tensor)
+def resize(input_tensor: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+    return TF.resize(input_tensor, target.size()[-2:-1], interpolation=InterpolationMode.NEAREST)

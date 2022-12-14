@@ -1,9 +1,10 @@
-import numpy as np
-import torch
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
+
+import torch
+import numpy as np
 import wandb
 
 from utils.utils import resize
