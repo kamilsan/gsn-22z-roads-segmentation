@@ -4,8 +4,8 @@ from torchvision.transforms import Resize, Compose, ToTensor, Normalize, PILToTe
 
 import pytorch_lightning as pl
 
-from utils.labels import id2label
-from utils.remap_labels import RemapCityscapesLabels
+from project.utils.labels import id2label
+from project.utils.remap_labels import RemapCityscapesLabels
 
 
 class CityScapesDataModule(pl.LightningDataModule):

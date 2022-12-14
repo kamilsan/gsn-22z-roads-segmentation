@@ -4,10 +4,10 @@ from pytorch_lightning.loggers import WandbLogger
 
 import numpy as np
 
-from lightning_data_modules.city_scapes import CityScapesDataModule
-from lightning_modules.segmentation_module import SegmentationModule
-from models.unet import UNet
-from utils.callbacks import ImageSegmentationLogger, checkpoint_callback, early_stop_callback
+from project.data.lightning_data_modules.city_scapes import CityScapesDataModule
+from project.lightning_module.segmentation_module import SegmentationModule
+from project.model.unet import UNet
+from project.utils.callbacks import ImageSegmentationLogger, checkpoint_callback, early_stop_callback
 
 
 def main():

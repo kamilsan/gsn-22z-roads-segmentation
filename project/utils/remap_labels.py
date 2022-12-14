@@ -1,6 +1,6 @@
 from typing import Dict
 from PIL.Image import Image
-from utils.labels import Label
+from project.utils.labels import Label
 
 
 class RemapCityscapesLabels:

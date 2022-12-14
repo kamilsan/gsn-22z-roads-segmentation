@@ -1,5 +1,6 @@
 from typing import Dict, Tuple
 
+import hydra
 import torch
 import torch.nn.functional as F
 
@@ -9,9 +10,12 @@ import pytorch_lightning as pl
 
 
 class SegmentationModule(pl.LightningModule):
-    def __init__(self, model) -> None:
+    def __init__(self, model, optimizer) -> None:
         super().__init__()
+        self.save_hyperparameters()
+
         self.model = model
+        self.optimizer = optimizer
         self.lr = 1e-4
         self.num_classes = model.num_classes
         self.current_epoch_training_loss = torch.tensor(0.0)
@@ -66,6 +70,7 @@ class SegmentationModule(pl.LightningModule):
                  on_epoch=True, prog_bar=True, logger=True)
         return {'test_loss': loss, 'test_IoU': iou}
 
-    def configure_optimizers(self) -> Tuple[list, list]:
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
+    def configure_optimizers(self) -> list:
+        # optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
+        optimizer = hydra.utils.instantiate(self.hparams.optim, params=self.parameters())
         return [optimizer]

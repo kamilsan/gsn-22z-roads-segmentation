@@ -7,7 +7,7 @@ import torch
 import numpy as np
 import wandb
 
-from utils.utils import resize
+from project.utils.utils import resize
 
 
 class ImageSegmentationLogger(Callback):

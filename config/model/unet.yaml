@@ -1,0 +1,7 @@
+name: unet
+
+_target_: project.model.unet.UNet
+
+in_channels: 3
+out_channels: 20
+channels: [64, 128, 256, 512, 1024]
