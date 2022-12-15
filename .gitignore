@@ -161,5 +161,8 @@ cython_debug/
 
 .vscode/
 
+wandb/
+lightning_logs/
+
 dataset/gtFine/
 dataset/leftImg8bit/

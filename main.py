@@ -1,52 +1,48 @@
+import hydra
+import pytorch_lightning as pl
 import torch
-from torch import nn
-from torch.utils.data import DataLoader
+from omegaconf import DictConfig, OmegaConf
 
-import torchvision
-import torchvision.transforms
-
-from models.unet import UNet
+from project.utils.callbacks import ImageSegmentationLogger, checkpoint_callback, early_stop_callback
 
 
-def main():
+@hydra.main(config_path='config', config_name='defaults', version_base='1.1')
+def main(cfg: DictConfig) -> None:
 
-    transforms_input = torchvision.transforms.Compose([
-        torchvision.transforms.Resize((572, 572)),
-        torchvision.transforms.ToTensor()
-    ])
+    pl.seed_everything(cfg.seed)
 
-    transforms_target = torchvision.transforms.Compose([
-        torchvision.transforms.Resize((388, 388)),
-        torchvision.transforms.PILToTensor()
-    ])
+    device = torch.device(
+        'cuda') if torch.cuda.is_available() else torch.device('cpu')
+    print("Running on: " + str(device))
 
-    dataset = torchvision.datasets.Cityscapes('./dataset', split='train', mode='fine',
-                                              target_type='semantic', transform=transforms_input, target_transform=transforms_target)
-    loader = DataLoader(dataset, batch_size=1, shuffle=False)
+    logger = hydra.utils.instantiate(cfg.logger)
 
-    model = UNet(3, 30)
-    loss_function = nn.CrossEntropyLoss()
+    model = hydra.utils.instantiate(cfg.model)
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
+    pl_module = hydra.utils.instantiate(
+        cfg.lightning_module,
+        model=model,
+        # Don't instantiate optimizer submodules with hydra, let `configure_optimizers()` do it
+        _recursive_=False,
+    )
 
-    first_batch = [next(iter(loader))]
+    data_module = hydra.utils.instantiate(cfg.data)
 
-    epochs = 1000
+    data_module.setup()
+    val_samples = next(iter(data_module.val_dataloader()))
 
-    model.train()
-    for epoch in range(epochs):
-        print(f'Epoch {epoch+1} out of {epochs}')
+    trainer = pl.Trainer(
+        **OmegaConf.to_container(cfg.trainer),
+        accelerator=str(device),
+        logger=logger,
+        callbacks=[
+            checkpoint_callback,
+            early_stop_callback,
+            ImageSegmentationLogger(val_samples)
+        ]
+    )
 
-        for x, target in first_batch:
-            y = model(x)
-
-            # unsqueeze needed to make a batch, because squeeze removed it
-            loss = loss_function(y, target.long().squeeze().unsqueeze(dim=0))
-            print(f'Loss: {loss}')
-
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+    trainer.fit(pl_module, data_module)
 
 
 if __name__ == '__main__':

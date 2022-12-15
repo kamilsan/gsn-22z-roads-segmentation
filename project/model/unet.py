@@ -11,8 +11,10 @@ class UNetConvBlock(nn.Module):
     def __init__(self, in_features: int, out_features: int):
         super().__init__()
 
-        self.conv1 = nn.Conv2d(in_features, out_features, kernel_size=3)
-        self.conv2 = nn.Conv2d(out_features, out_features, kernel_size=3)
+        self.conv1 = nn.Conv2d(in_features, out_features,
+                               kernel_size=3, padding='same')
+        self.conv2 = nn.Conv2d(out_features, out_features,
+                               kernel_size=3, padding='same')
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.conv1(x)
@@ -25,18 +27,21 @@ class UNetConvBlock(nn.Module):
 
 class UNet(nn.Module):
 
-    def __init__(self, in_channels: int, out_channels: int, channels: List[int] = [64, 128, 256, 512, 1024]):
+    def __init__(self, in_channels: int, out_channels: int, channels: List[int] = [64, 128, 256, 512, 1024], **kwargs) -> None:
         super().__init__()
 
+        self.num_classes = out_channels
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
 
         full_channels_list = [in_channels] + channels
         self.down_blocks = nn.ModuleList([UNetConvBlock(
-            full_channels_list[idx], full_channels_list[idx + 1]) for idx in range(len(full_channels_list) - 1)])
+            full_channels_list[idx],
+            full_channels_list[idx + 1]) for idx in range(len(full_channels_list) - 1)])
 
         full_channels_list.reverse()
         self.up_blocks = nn.ModuleList([UNetConvBlock(
-            full_channels_list[idx], full_channels_list[idx + 1]) for idx in range(len(full_channels_list) - 1)])
+            full_channels_list[idx],
+            full_channels_list[idx + 1]) for idx in range(len(full_channels_list) - 1)])
         self.up_convs = nn.ModuleList([nn.ConvTranspose2d(full_channels_list[idx], full_channels_list[idx + 1],
                                       kernel_size=2, stride=2) for idx in range(len(full_channels_list) - 1)])
 
@@ -61,6 +66,8 @@ class UNet(nn.Module):
             x = up_conv(x)
             x = self.concatenate_with_features(x, features)
             x = up_block(x)
+
+        x = self.final_conv(x)
 
         return x
 
