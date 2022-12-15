@@ -64,13 +64,9 @@ class UNet(nn.Module):
         # Decoder
         for features, up_block, up_conv in zip(features_list, self.up_blocks, self.up_convs):
             x = up_conv(x)
-            x = self.concatenate_with_features(x, features)
+            x = torch.cat([x, features], dim=1)
             x = up_block(x)
 
         x = self.final_conv(x)
 
         return x
-
-    def concatenate_with_features(self, x: torch.Tensor, features: torch.Tensor) -> torch.Tensor:
-        features_crop = TF.center_crop(features, x.shape[-2:])
-        return torch.cat([x, features_crop], dim=1)

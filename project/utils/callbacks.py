@@ -7,8 +7,6 @@ import torch
 import numpy as np
 import wandb
 
-from project.utils.utils import resize
-
 
 class ImageSegmentationLogger(Callback):
     def __init__(self, val_samples: torch.Tensor, num_samples: int = 32) -> None:
@@ -20,13 +18,12 @@ class ImageSegmentationLogger(Callback):
         # Bring the tensors to CPU
         val_imgs = self.val_imgs.to(device=pl_module.device)
         val_ground_truth = self.val_ground_truth.to(device=pl_module.device)
-        val_ground_truth = resize(val_ground_truth, val_imgs)
+
         # Get model prediction
         outputs = pl_module(val_imgs)
-        outputs = resize(outputs, val_imgs)
         preds = torch.argmax(outputs, 1)
 
-        class_labels = dict(zip(range(1, 34), [str(x) for x in range(1, 34)]))
+        class_labels = dict(zip(range(1, 20), [str(x) for x in range(1, 20)]))
 
         for x, pred, y in zip(val_imgs[:self.num_samples],
                               preds[:self.num_samples],

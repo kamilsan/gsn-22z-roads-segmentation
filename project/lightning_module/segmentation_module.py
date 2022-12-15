@@ -16,7 +16,6 @@ class SegmentationModule(pl.LightningModule):
 
         self.model = model
         self.optimizer = optim
-        self.lr = 1e-4
         self.num_classes = model.num_classes
         self.current_epoch_training_loss = torch.tensor(0.0)
 
@@ -71,6 +70,6 @@ class SegmentationModule(pl.LightningModule):
         return {'test_loss': loss, 'test_IoU': iou}
 
     def configure_optimizers(self) -> list:
-        # optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
-        optimizer = hydra.utils.instantiate(self.hparams.optim, params=self.parameters())
+        optimizer = hydra.utils.instantiate(
+            self.hparams.optim, params=self.parameters())
         return [optimizer]

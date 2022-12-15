@@ -163,6 +163,7 @@ cython_debug/
 
 wandb/
 lightning_logs/
+outputs/
 
 dataset/gtFine/
 dataset/leftImg8bit/
