@@ -5,7 +5,7 @@ hydra:
 # Global configurations shared between different modules
 experiment: baseline
 seed: 42
-
+image_size: [576, 576]
 
 defaults:
   - data: city_scapes

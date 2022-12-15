@@ -1,9 +1,7 @@
-from typing import List
+from typing import List, Tuple
 import torch
 import torch.nn.functional as F
 from torch import nn
-
-import torchvision.transforms.functional as TF
 
 
 class UNetConvBlock(nn.Module):
@@ -27,8 +25,20 @@ class UNetConvBlock(nn.Module):
 
 class UNet(nn.Module):
 
-    def __init__(self, in_channels: int, out_channels: int, channels: List[int] = [64, 128, 256, 512, 1024], **kwargs) -> None:
+    def __init__(self, image_size: Tuple[int, int],
+                 in_channels: int,
+                 out_channels: int, channels: List[int] = [64, 128, 256, 512, 1024],
+                 **kwargs) -> None:
         super().__init__()
+
+        # Since input image is downscaled by a factor of 2
+        # at every pooling, input image sizes should be divisible
+        # by 2^number of pooling operations
+        total_downscale_factor = 2 ** len(channels)
+        if image_size[0] % total_downscale_factor != 0 or \
+           image_size[1] % total_downscale_factor != 0:
+            raise Exception(
+                f'Input image size should be divisible by {total_downscale_factor}')
 
         self.num_classes = out_channels
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
