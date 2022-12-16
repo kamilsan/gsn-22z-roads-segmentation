@@ -7,6 +7,8 @@ import torch
 import numpy as np
 import wandb
 
+from project.utils.labels import id2label
+
 
 class ImageSegmentationLogger(Callback):
     def __init__(self, val_samples: torch.Tensor, num_samples: int = 32) -> None:
@@ -23,7 +25,7 @@ class ImageSegmentationLogger(Callback):
         outputs = pl_module(val_imgs)
         preds = torch.argmax(outputs, 1)
 
-        class_labels = dict(zip(range(1, 20), [str(x) for x in range(1, 20)]))
+        class_labels = dict((v.trainId, v.name) for (k, v) in id2label.items())
 
         for x, pred, y in zip(val_imgs[:self.num_samples],
                               preds[:self.num_samples],
