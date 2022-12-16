@@ -12,4 +12,4 @@ if [ "$( dirname "$0" )" != "./scripts" ]; then
     exit
 fi
 
-pylint *.py models/*.py lightning_data_modules/*.py lightning_modules/*.py utils/*.py
+pylint $(git ls-files '**.py')

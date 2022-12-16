@@ -12,4 +12,4 @@ if [ "$( dirname "$0" )" != "./scripts" ]; then
     exit
 fi
 
-autopep8 --in-place --exit-code *.py models/*.py lightning_data_modules/*.py lightning_modules/*.py utils/*.py
+autopep8 --in-place --exit-code $(git ls-files '**.py')
