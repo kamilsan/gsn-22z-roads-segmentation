@@ -5,7 +5,7 @@ hydra:
 # Global configurations shared between different modules
 experiment: baseline
 seed: 42
-image_size: [576, 576]
+image_size: [512, 512]
 
 defaults:
   - data: city_scapes
@@ -43,7 +43,7 @@ trainer:
   # log_every_n_steps: 50
   # log_gpu_memory: False
   # logger: True
-  max_epochs: 2
+  max_epochs: 30
   # max_steps: None
   # min_epochs: None
   # min_steps: None
