@@ -1,0 +1,7 @@
+name: segmentation_module
+
+_target_: project.lightning_module.segmentation_module.SegmentationModule
+
+defaults:
+  - /model/unet
+  - /optim/adam
