@@ -28,7 +28,7 @@ class SegmentationModule(pl.LightningModule):
     def common_step(self, batch: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         x, y = batch
         outputs = self(x)
-        loss = self.compute_loss(outputs, y.long().squeeze())
+        loss = self.compute_loss(outputs, y.long().squeeze(dim=1))
         return loss, outputs, y
 
     def common_test_valid_step(self, batch: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
