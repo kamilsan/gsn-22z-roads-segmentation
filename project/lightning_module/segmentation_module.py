@@ -23,7 +23,7 @@ class SegmentationModule(pl.LightningModule):
         return self.model(x)
 
     def compute_loss(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
-        return F.cross_entropy(x, y)
+        return F.cross_entropy(x, y, ignore_index=255)
 
     def common_step(self, batch: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         x, y = batch
@@ -35,7 +35,7 @@ class SegmentationModule(pl.LightningModule):
         loss, outputs, y = self.common_step(batch)
         preds = torch.argmax(outputs, dim=1)
         iou = MF.jaccard_index(preds.unsqueeze(
-            dim=1), y, task="multiclass", num_classes=self.num_classes)
+            dim=1), y, task="multiclass", num_classes=self.num_classes, ignore_index=255)
         return loss, iou
 
     def training_step(self, batch: torch.Tensor, batch_idx: int) -> Dict[str, torch.Tensor]:

@@ -6,11 +6,12 @@ hydra:
 experiment: baseline
 seed: 42
 image_size: [512, 512]
+output_image_size: [270, 270]
 
 defaults:
   - data: city_scapes
   - lightning_module: segmentation_module
-  - model: unet
+  - model: ghost_unet
   - logger: wandb
 #
 #  - override hydra/job_logging: colorlog

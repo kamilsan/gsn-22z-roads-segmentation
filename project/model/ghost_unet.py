@@ -3,6 +3,8 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 import math
+import torchvision.transforms.functional as TF
+from torchvision.transforms import InterpolationMode
 
 
 class SqueezeExcitation(nn.Module):
@@ -34,7 +36,7 @@ class SqueezeExcitation(nn.Module):
 class GhostModule(nn.Module):
     # Mostly stolen from https://github.com/huawei-noah/Efficient-AI-Backbones/blob/master/ghostnet_pytorch/ghostnet.py
     # (original authors' implementation)
-    # as paper doesn't quite explain what are those cheap operations.
+    # as paper doesn't quite explain what those cheap operations are.
     # Adapted for Ghost-UNet
     def __init__(self, input_channels: int, output_channels: int, kernel_size: int = 1, ratio: float = 2, dw_size: int = 3, stride: int = 1, relu: bool = True) -> None:
         super().__init__()
@@ -76,10 +78,11 @@ class GhostModule(nn.Module):
 class GhostLayer(nn.Module):
     # NOTE: As there is no implementation and paper is not reproducible at all
     # many sizes here were choosen arbitraily
-    def __init__(self, in_channels: int, out_channels: int, kernel_size: int, stride: int, use_se: bool = True) -> None:
+    def __init__(self, in_channels: int, out_channels: int, kernel_size: int, stride: int, use_se: bool = True, use_pooling: bool = True) -> None:
         super().__init__()
 
         self.use_se = use_se
+        self.use_pooling = use_pooling
         self.skip_conv = stride == 1
 
         self.gm1 = GhostModule(in_channels, out_channels)
@@ -87,12 +90,12 @@ class GhostLayer(nn.Module):
         # TODO: Figure 1 suggests that when stride = 1 dw conv is skipped, yet on Figure 2 it is always used...
         if not self.skip_conv:
             self.conv = nn.Conv2d(out_channels, out_channels, kernel_size,
-                                  stride, padding=2, groups=out_channels, bias=False)
+                                  1, padding=kernel_size//2, groups=out_channels, bias=False)
 
         self.batch_norm = nn.BatchNorm2d(out_channels)
 
         # TODO: Also, sizes do not match. For GL6 input size is 19x19, kernel size 2, stride 1 and output is 20x20
-        # similar thing whit layer 7 - size also grows by 1 pixel
+        # similar thing with layer 7 - size also grows by 1 pixel
         # if dw-conv should really be skipped, some padding must happen inside Ghost Module
 
         if use_se:
@@ -100,7 +103,8 @@ class GhostLayer(nn.Module):
 
         self.gm2 = GhostModule(out_channels, out_channels, relu=False)
 
-        # TODO: MaxPool how?
+        if use_pooling:
+            self.pool = nn.MaxPool2d(kernel_size=kernel_size, stride=stride)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.gm1(x)
@@ -116,6 +120,9 @@ class GhostLayer(nn.Module):
             x = self.se(x)
 
         x = self.gm2(x)
+
+        if self.use_pooling:
+            x = self.pool(x)
 
         return x
 
@@ -143,39 +150,71 @@ class GhostUNetDConv(nn.Module):
 
 class GhostUNet(nn.Module):
 
-    def __init__(self, **kwargs) -> None:
+    def __init__(self, out_channels: int, **kwargs) -> None:
         super().__init__()
 
-        self.layer1 = GhostLayer(3, 64, 2, 2, False)
-        self.layer2 = GhostLayer(64, 125, 2, 2, True)
-        self.layer3 = GhostLayer(125, 256, 2, 2, False)
-        self.layer4 = GhostLayer(256, 415, 2, 2, True)
-        self.layer5 = GhostLayer(415, 612, 2, 2, False)
-        self.layer6 = GhostLayer(612, 950, 2, 1, True)
-        self.layer7 = GhostLayer(950, 1024, 2, 1, False)
+        self.num_classes = out_channels
+
+        self.enc_layer1 = GhostLayer(3, 64, 2, 2, use_se=False)
+        self.enc_layer2 = GhostLayer(64, 125, 2, 2, use_se=True)
+        self.enc_layer3 = GhostLayer(125, 256, 2, 2, use_se=False)
+        self.enc_layer4 = GhostLayer(256, 415, 2, 2, use_se=True)
+        self.enc_layer5 = GhostLayer(415, 612, 2, 2, use_se=False)
+        self.enc_layer6 = GhostLayer(612, 950, 2, 1, use_se=True)
+        self.enc_layer7 = GhostLayer(
+            950, 1024, 2, 1, use_se=False, use_pooling=False)
+
+        self.double_conv = GhostUNetDConv(out_channels, out_channels)
+
+        self.up_conv1 = nn.ConvTranspose2d(
+            1024, out_channels, kernel_size=4, stride=2)
+        self.up_conv2 = nn.ConvTranspose2d(
+            950 + out_channels, out_channels, kernel_size=4, stride=2)
+        self.up_conv3 = nn.ConvTranspose2d(
+            415 + out_channels, out_channels, kernel_size=4, stride=2)
+        self.up_conv4 = nn.ConvTranspose2d(
+            256 + out_channels, out_channels, kernel_size=4, stride=2)
+
+        self.final_conv = nn.ConvTranspose2d(
+            125 + out_channels, out_channels, kernel_size=1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        print(x.shape)
+        x = self.enc_layer1(x)
 
-        x = self.layer1(x)
-        print(x.shape)
+        features1 = self.enc_layer2(x)
+        features2 = self.enc_layer3(features1)
+        features3 = self.enc_layer4(features2)
 
-        x = self.layer2(x)
-        print(x.shape)
+        x = self.enc_layer5(features3)
 
-        x = self.layer3(x)
-        print(x.shape)
+        features4 = self.enc_layer6(x)
 
-        x = self.layer4(x)
-        print(x.shape)
+        x = self.enc_layer7(features4)
 
-        x = self.layer5(x)
-        print(x.shape)
+        x = self.up_conv1(x)
+        x = self.double_conv(x)
+        x = self.concat_with_features(x, features4)
 
-        x = self.layer6(x)
-        print(x.shape)
+        x = self.up_conv2(x)
+        x = self.double_conv(x)
+        x = self.concat_with_features(x, features3)
 
-        x = self.layer7(x)
-        print(x.shape)
+        x = self.up_conv3(x)
+        x = self.double_conv(x)
+        x = self.concat_with_features(x, features2)
+
+        x = self.up_conv4(x)
+        x = self.double_conv(x)
+        x = self.concat_with_features(x, features1)
+
+        x = self.final_conv(x)
 
         return x
+
+    def concat_with_features(self, x: torch.Tensor, features: torch.Tensor) -> torch.Tensor:
+        target_size = x.shape[-2:]
+        features_resized = TF.resize(
+            features, target_size, interpolation=InterpolationMode.NEAREST)
+        result = torch.cat([x, features_resized], dim=1)
+
+        return result

@@ -4,6 +4,6 @@ _target_: project.model.unet.UNet
 
 image_size: ${image_size}
 in_channels: 3
-out_channels: 20
+out_channels: 19
 channels: [64, 128, 256, 512, 1024]
 
