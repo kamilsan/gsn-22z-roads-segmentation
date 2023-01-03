@@ -150,9 +150,10 @@ class GhostUNetDConv(nn.Module):
 
 class GhostUNet(nn.Module):
 
-    def __init__(self, out_channels: int, **kwargs) -> None:
+    def __init__(self, image_size: Tuple[int, int], out_channels: int, **kwargs) -> None:
         super().__init__()
 
+        self.image_size = image_size
         self.num_classes = out_channels
 
         self.enc_layer1 = GhostLayer(3, 64, 2, 2, use_se=False)
@@ -164,16 +165,21 @@ class GhostUNet(nn.Module):
         self.enc_layer7 = GhostLayer(
             950, 1024, 2, 1, use_se=False, use_pooling=False)
 
-        self.double_conv = GhostUNetDConv(out_channels, out_channels)
-
         self.up_conv1 = nn.ConvTranspose2d(
             1024, out_channels, kernel_size=4, stride=2)
+        self.double_conv1 = GhostUNetDConv(out_channels, out_channels)
+
         self.up_conv2 = nn.ConvTranspose2d(
             950 + out_channels, out_channels, kernel_size=4, stride=2)
+        self.double_conv2 = GhostUNetDConv(out_channels, out_channels)
+
         self.up_conv3 = nn.ConvTranspose2d(
             415 + out_channels, out_channels, kernel_size=4, stride=2)
+        self.double_conv3 = GhostUNetDConv(out_channels, out_channels)
+
         self.up_conv4 = nn.ConvTranspose2d(
             256 + out_channels, out_channels, kernel_size=4, stride=2)
+        self.double_conv4 = GhostUNetDConv(out_channels, out_channels)
 
         self.final_conv = nn.ConvTranspose2d(
             125 + out_channels, out_channels, kernel_size=1)
@@ -192,24 +198,24 @@ class GhostUNet(nn.Module):
         x = self.enc_layer7(features4)
 
         x = self.up_conv1(x)
-        x = self.double_conv(x)
+        x = self.double_conv1(x)
         x = self.concat_with_features(x, features4)
 
         x = self.up_conv2(x)
-        x = self.double_conv(x)
+        x = self.double_conv2(x)
         x = self.concat_with_features(x, features3)
 
         x = self.up_conv3(x)
-        x = self.double_conv(x)
+        x = self.double_conv3(x)
         x = self.concat_with_features(x, features2)
 
         x = self.up_conv4(x)
-        x = self.double_conv(x)
+        x = self.double_conv4(x)
         x = self.concat_with_features(x, features1)
 
         x = self.final_conv(x)
 
-        return x
+        return TF.resize(x, self.image_size, interpolation=InterpolationMode.NEAREST)
 
     def concat_with_features(self, x: torch.Tensor, features: torch.Tensor) -> torch.Tensor:
         target_size = x.shape[-2:]

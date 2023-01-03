@@ -2,4 +2,5 @@ name: ghost_unet
 
 _target_: project.model.ghost_unet.GhostUNet
 
+image_size: ${image_size}
 out_channels: 19
