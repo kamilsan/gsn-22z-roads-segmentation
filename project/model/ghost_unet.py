@@ -86,13 +86,13 @@ class GhostLayer(nn.Module):
         self.skip_conv = stride == 1
 
         self.gm1 = GhostModule(in_channels, out_channels)
+        self.batch_norm1 = nn.BatchNorm2d(out_channels)
 
         # TODO: Figure 1 suggests that when stride = 1 dw conv is skipped, yet on Figure 2 it is always used...
         if not self.skip_conv:
             self.conv = nn.Conv2d(out_channels, out_channels, kernel_size,
                                   1, padding=kernel_size//2, groups=out_channels, bias=False)
-
-        self.batch_norm = nn.BatchNorm2d(out_channels)
+            self.batch_norm2 = nn.BatchNorm2d(out_channels)
 
         # TODO: Also, sizes do not match. For GL6 input size is 19x19, kernel size 2, stride 1 and output is 20x20
         # similar thing with layer 7 - size also grows by 1 pixel
@@ -108,12 +108,12 @@ class GhostLayer(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.gm1(x)
-        x = self.batch_norm(x)
+        x = self.batch_norm1(x)
         x = F.leaky_relu(x)
 
         if not self.skip_conv:
             x = self.conv(x)
-            x = self.batch_norm(x)
+            x = self.batch_norm2(x)
             x = F.leaky_relu(x)
 
         if self.use_se:
@@ -134,16 +134,18 @@ class GhostUNetDConv(nn.Module):
 
         self.conv1 = nn.Conv2d(in_features, out_features,
                                kernel_size=3, padding='same')
+        self.batch_norm1 = nn.BatchNorm2d(out_features)
+
         self.conv2 = nn.Conv2d(out_features, out_features,
                                kernel_size=3, padding='same')
-        self.batch_norm = nn.BatchNorm2d(out_features)
+        self.batch_norm2 = nn.BatchNorm2d(out_features)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.conv1(x)
-        x = self.batch_norm(x)
+        x = self.batch_norm1(x)
         x = F.leaky_relu(x)
         x = self.conv2(x)
-        x = self.batch_norm(x)
+        x = self.batch_norm2(x)
 
         return x
 
