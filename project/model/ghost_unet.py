@@ -38,7 +38,7 @@ class GhostModule(nn.Module):
     # (original authors' implementation)
     # as paper doesn't quite explain what those cheap operations are.
     # Adapted for Ghost-UNet
-    def __init__(self, input_channels: int, output_channels: int, kernel_size: int = 1, ratio: float = 2, dw_size: int = 3, stride: int = 1, relu: bool = True) -> None:
+    def __init__(self, input_channels: int, output_channels: int, kernel_size: int = 3, ratio: float = 2, dw_size: int = 3, stride: int = 1, relu: bool = True) -> None:
         super().__init__()
 
         reduced_channels = math.ceil(output_channels / ratio)
