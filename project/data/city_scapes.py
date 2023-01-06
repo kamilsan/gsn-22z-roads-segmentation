@@ -19,7 +19,7 @@ class CityScapesDataModule(pl.LightningDataModule):
         self.batch_size = batch_size
         self.image_size = tuple(image_size)
 
-        self.imagenet_transform = Compose([
+        self.input_transform = Compose([
             Resize(self.image_size),
             ToTensor(),
             Normalize(mean=norm_mean, std=norm_std)
@@ -36,12 +36,12 @@ class CityScapesDataModule(pl.LightningDataModule):
     def setup(self, stage: str = None) -> None:
         if stage == 'fit' or stage is None:
             self.train_dataset = Cityscapes(self.data_directory, split='train', mode='fine', target_type='semantic',
-                                            transform=self.imagenet_transform, target_transform=self.target_transform)
+                                            transform=self.input_transform, target_transform=self.target_transform)
             self.val_dataset = Cityscapes(self.data_directory, split='val', mode='fine', target_type='semantic',
-                                          transform=self.imagenet_transform, target_transform=self.target_transform)
+                                          transform=self.input_transform, target_transform=self.target_transform)
         if stage == 'test' or stage is None:
             self.test_dataset = Cityscapes(self.data_directory, split='test', mode='fine', target_type='semantic',
-                                           transform=self.imagenet_transform, target_transform=self.target_transform)
+                                           transform=self.input_transform, target_transform=self.target_transform)
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(self.train_dataset, batch_size=self.batch_size, num_workers=self.num_workers, shuffle=True)
