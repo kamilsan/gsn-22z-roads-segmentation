@@ -77,7 +77,7 @@ class GhostModule(nn.Module):
 
 class GhostLayer(nn.Module):
     # NOTE: As there is no implementation and paper is not reproducible at all
-    # many sizes here were choosen arbitraily
+    # many sizes here were choosen more or less arbitraily
     def __init__(self, in_channels: int, out_channels: int, kernel_size: int, stride: int, use_se: bool = True, use_pooling: bool = True) -> None:
         super().__init__()
 
@@ -88,15 +88,11 @@ class GhostLayer(nn.Module):
         self.gm1 = GhostModule(in_channels, out_channels)
         self.batch_norm1 = nn.BatchNorm2d(out_channels)
 
-        # TODO: Figure 1 suggests that when stride = 1 dw conv is skipped, yet on Figure 2 it is always used...
+        # NOTE: Figure 1 suggests that when stride = 1 dw conv is skipped, yet on Figure 2 it is always used...
         if not self.skip_conv:
             self.conv = nn.Conv2d(out_channels, out_channels, kernel_size,
                                   1, padding=kernel_size//2, groups=out_channels, bias=False)
             self.batch_norm2 = nn.BatchNorm2d(out_channels)
-
-        # TODO: Also, sizes do not match. For GL6 input size is 19x19, kernel size 2, stride 1 and output is 20x20
-        # similar thing with layer 7 - size also grows by 1 pixel
-        # if dw-conv should really be skipped, some padding must happen inside Ghost Module
 
         if use_se:
             self.se = SqueezeExcitation(out_channels)
@@ -128,8 +124,8 @@ class GhostLayer(nn.Module):
 
 
 class GhostUNetDConv(nn.Module):
-    # At least this is easy
-    def __init__(self, in_features: int, out_features: int):
+
+    def __init__(self, in_features: int, out_features: int) -> None:
         super().__init__()
 
         self.conv1 = nn.Conv2d(in_features, out_features,
