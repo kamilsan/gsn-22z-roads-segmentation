@@ -3,7 +3,7 @@ import pytorch_lightning as pl
 import torch
 from omegaconf import DictConfig, OmegaConf
 
-from project.utils.callbacks import ImageSegmentationLogger, checkpoint_callback, early_stop_callback
+from project.utils.callbacks import ImageSegmentationLogger, checkpoint_callback, early_stop_callback, summary_callback
 
 
 @hydra.main(config_path='config', config_name='defaults', version_base='1.1')
@@ -38,6 +38,7 @@ def main(cfg: DictConfig) -> None:
         callbacks=[
             checkpoint_callback,
             early_stop_callback,
+            summary_callback,
             ImageSegmentationLogger(val_samples)
         ]
     )

@@ -10,7 +10,7 @@ image_size: [512, 512]
 defaults:
   - data: city_scapes
   - lightning_module: segmentation_module
-  - model: unet
+  - model: ghost_unet
   - logger: wandb
 #
 #  - override hydra/job_logging: colorlog

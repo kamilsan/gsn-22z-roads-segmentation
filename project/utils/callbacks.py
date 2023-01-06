@@ -2,6 +2,7 @@ import pytorch_lightning as pl
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
+from pytorch_lightning.callbacks.model_summary import ModelSummary
 
 import torch
 import numpy as np
@@ -64,3 +65,5 @@ checkpoint_callback = ModelCheckpoint(
     filename=MODEL_CKPT,
     save_top_k=3,
     mode='min')
+
+summary_callback = ModelSummary(max_depth=-1)

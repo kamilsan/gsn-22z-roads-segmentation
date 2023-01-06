@@ -23,7 +23,7 @@ class SegmentationModule(pl.LightningModule):
         return self.model(x)
 
     def compute_loss(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
-        return F.cross_entropy(x, y)
+        return F.cross_entropy(x, y, ignore_index=255)
 
     def common_step(self, batch: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         x, y = batch

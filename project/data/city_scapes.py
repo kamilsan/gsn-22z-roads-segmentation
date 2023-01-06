@@ -9,7 +9,7 @@ from project.utils.remap_labels import RemapCityscapesLabels
 
 
 class CityScapesDataModule(pl.LightningDataModule):
-    def __init__(self, image_size, norm_mean, norm_std, batch_size: int = 4, data_directory: str = '~/dataset',
+    def __init__(self, image_size, norm_mean, norm_std, batch_size: int = 4, data_directory: str = './dataset',
                  num_workers: int = 4, **kwargs) -> None:
         super().__init__()
         self.data_directory = data_directory
@@ -27,7 +27,8 @@ class CityScapesDataModule(pl.LightningDataModule):
 
         self.target_transform = Compose([
             RemapCityscapesLabels(id2label),
-            Resize(self.image_size, interpolation=InterpolationMode.NEAREST),
+            Resize(self.image_size,
+                   interpolation=InterpolationMode.NEAREST),
             PILToTensor()
         ])
 
